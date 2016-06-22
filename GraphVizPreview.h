@@ -26,6 +26,10 @@ public:
 	GraphVizPreview(HINSTANCE, HWND);
 	~GraphVizPreview();
 
+    void zoom_in();
+    void zoom_out();
+    void reset_zoom();
+
     void graph(bool saveAs);
 	void draw();
 	void refresh();
@@ -40,6 +44,8 @@ public:
     std::vector<char> m_npp_text;
 	std::vector<char> m_bmp_data;
 	
+    double m_zoom;
+
 	HWND m_hDlg;
 	HINSTANCE m_hInst;
 };

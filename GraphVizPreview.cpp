@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "GraphVizPreview.h"
 #include <shlobj.h>
+#include <windowsx.h>   // for mouse wheel
 #include "resource.h" // To get dialog enumerations.
 
 #include <algorithm>
@@ -112,6 +113,25 @@ INT_PTR CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_EXITSIZEMOVE:
         RedrawWindow(getGraphVizPreview()->m_hDlg, NULL, NULL, RDW_INVALIDATE);
         break;
+    case WM_MOUSEWHEEL:
+    {
+        int xPos = GET_X_LPARAM(lParam);
+        int yPos = GET_Y_LPARAM(lParam);
+        int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+
+        GraphVizPreview * pPreviewWin = getGraphVizPreview();
+        if (delta > 0)
+            pPreviewWin->zoom_in();
+        else
+            pPreviewWin->zoom_out();
+
+        RedrawWindow(pPreviewWin->m_hDlg, NULL, NULL, RDW_INVALIDATE);
+        break;
+    }
+    case WM_MBUTTONDOWN:
+        getGraphVizPreview()->reset_zoom();
+        RedrawWindow(getGraphVizPreview()->m_hDlg, NULL, NULL, RDW_INVALIDATE);
+        break;
 	case WM_COMMAND:
         switch (LOWORD(wParam))
         {
@@ -206,7 +226,7 @@ INT_PTR CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 GraphVizPreview::GraphVizPreview(HINSTANCE hInst, HWND hWnd)
-    : m_b_err(false), m_layout_engine(lastLayoutEngine), m_graphviz_path(TEXT(""))
+    : m_b_err(false), m_layout_engine(lastLayoutEngine), m_graphviz_path(TEXT("")), m_zoom(-1.0)
 {
 	m_hInst = hInst;
 
@@ -224,6 +244,21 @@ GraphVizPreview::GraphVizPreview(HINSTANCE hInst, HWND hWnd)
 GraphVizPreview::~GraphVizPreview()
 {
     lastLayoutEngine = this->m_layout_engine;
+}
+
+void GraphVizPreview::zoom_in()
+{
+    m_zoom *= 1.1;
+}
+
+void GraphVizPreview::zoom_out()
+{
+    m_zoom *= 0.9;
+}
+
+void GraphVizPreview::reset_zoom()
+{
+    m_zoom = -1.0;
 }
 
 void GraphVizPreview::graph(bool saveAs)
@@ -463,23 +498,34 @@ void GraphVizPreview::draw()
     double width_ratio = double(output_dimensions.right) / bitmap.bmWidth;
     double height_ratio = double(output_dimensions.bottom) / bitmap.bmHeight;
 
-    if (width_ratio < 1.0 || height_ratio < 1.0)
+    if (m_zoom <= 0.0)
     {
-        if (width_ratio < height_ratio)
+        if (width_ratio < 1.0 || height_ratio < 1.0)
         {
-            output_dimensions.right = bitmap.bmWidth * width_ratio;
-            output_dimensions.bottom = bitmap.bmHeight * width_ratio;
+            if (width_ratio < height_ratio)
+            {
+                output_dimensions.right = bitmap.bmWidth * width_ratio;
+                output_dimensions.bottom = bitmap.bmHeight * width_ratio;
+                m_zoom = width_ratio;
+            }
+            else
+            {
+                output_dimensions.right = bitmap.bmWidth * height_ratio;
+                output_dimensions.bottom = bitmap.bmHeight * height_ratio;
+                m_zoom = height_ratio;
+            }
         }
         else
         {
-            output_dimensions.right = bitmap.bmWidth * height_ratio;
-            output_dimensions.bottom = bitmap.bmHeight * height_ratio;
+            output_dimensions.right = bitmap.bmWidth;
+            output_dimensions.bottom = bitmap.bmHeight;
+            m_zoom = 1.0;
         }
     }
     else
     {
-        output_dimensions.right = bitmap.bmWidth;
-        output_dimensions.bottom = bitmap.bmHeight;
+        output_dimensions.right = bitmap.bmWidth * m_zoom;
+        output_dimensions.bottom = bitmap.bmHeight * m_zoom;
     }
 
     // Begin painting    
