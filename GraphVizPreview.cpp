@@ -77,6 +77,8 @@ INT_PTR CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     layouts.push_back(layout(TEXT("twopi.exe"), ID_LAYOUTENGINE_TWOPI));
     layouts.push_back(layout(TEXT("circo.exe"), ID_LAYOUTENGINE_CIRCO));
 
+    static bool is_dragging = false;
+
     switch (uMsg)
 	{
 
@@ -114,16 +116,18 @@ INT_PTR CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         RedrawWindow(getGraphVizPreview()->m_hDlg, NULL, NULL, RDW_INVALIDATE);
         break;
     case WM_MOUSEWHEEL:
-    {
-        int xPos = GET_X_LPARAM(lParam);
-        int yPos = GET_Y_LPARAM(lParam);
+    {   
         int delta = GET_WHEEL_DELTA_WPARAM(wParam);
 
         GraphVizPreview * pPreviewWin = getGraphVizPreview();
+        
+        int x = GET_X_LPARAM(lParam);
+        int y = GET_Y_LPARAM(lParam);
+
         if (delta > 0)
-            pPreviewWin->zoom_in();
+            pPreviewWin->zoom(x, y, 1.5);
         else
-            pPreviewWin->zoom_out();
+            pPreviewWin->zoom(x, y, 0.5);
 
         RedrawWindow(pPreviewWin->m_hDlg, NULL, NULL, RDW_INVALIDATE);
         break;
@@ -132,6 +136,42 @@ INT_PTR CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         getGraphVizPreview()->reset_zoom();
         RedrawWindow(getGraphVizPreview()->m_hDlg, NULL, NULL, RDW_INVALIDATE);
         break;
+    case WM_MOUSEMOVE:
+        
+        if (wParam & MK_LBUTTON || wParam & MK_RBUTTON) // is left/right mouse button down?
+        {
+            static int x0, y0;
+            
+            int x = GET_X_LPARAM(lParam);
+            int y = GET_Y_LPARAM(lParam);
+
+            if (!is_dragging)
+            {
+                OutputDebugString(L"start drag");
+                is_dragging = true;
+                x0 = x;
+                y0 = y;
+            }
+
+            wchar_t sz[123];
+            swprintf(sz, L"%d %d\n", x - x0, y - y0);
+            OutputDebugString(sz);
+
+            getGraphVizPreview()->drag(x0-x, y0-y);
+            RedrawWindow(getGraphVizPreview()->m_hDlg, NULL, NULL, RDW_INVALIDATE);
+
+            x0 = x;
+            y0 = y;
+        }
+        else
+        {
+            if (is_dragging)
+                OutputDebugString(L"end drag");
+            is_dragging = false;
+        }
+        break;
+    case WM_ERASEBKGND:
+        return TRUE;    // to reduce flickering when dragging the preview
 	case WM_COMMAND:
         switch (LOWORD(wParam))
         {
@@ -246,19 +286,56 @@ GraphVizPreview::~GraphVizPreview()
     lastLayoutEngine = this->m_layout_engine;
 }
 
-void GraphVizPreview::zoom_in()
+void GraphVizPreview::zoom(int x, int y, double zoom_amount)
 {
-    m_zoom *= 1.1;
-}
+    m_zoom *= zoom_amount;
 
-void GraphVizPreview::zoom_out()
-{
-    m_zoom *= 0.9;
+    if (m_output_dimensions.top != 0 || m_output_dimensions.left != 0)
+    {
+        RECT Rect;
+        HWND pImage = GetDlgItem(m_hDlg, ID_PICTURE);
+        GetWindowRect(pImage, &Rect);
+        // Make x,y relative to pImage top-left
+        x -= Rect.left;
+        y -= Rect.top;
+
+        double width = (m_output_dimensions.right - m_output_dimensions.left);
+        double height = (m_output_dimensions.bottom - m_output_dimensions.top);
+
+        double left_weight = double(x - m_output_dimensions.left) / width;
+        double top_weight = double(y - m_output_dimensions.top) / height;
+
+        left_weight = min(left_weight, 1.0);
+        left_weight = max(left_weight, 0.0);
+        top_weight = min(top_weight, 1.0);
+        top_weight = max(top_weight, 0.0);
+
+        double right_weight = 1.0 - left_weight;
+        double bottom_weight = 1.0 - top_weight;
+
+        double zoom = 0.1;
+        
+        double width0 = (m_original_output_dimensions.right - m_original_output_dimensions.left);
+        double height0 = (m_original_output_dimensions.bottom - m_original_output_dimensions.top);
+
+        m_output_dimensions.left = x - m_zoom * left_weight * width0;
+        m_output_dimensions.right = x + m_zoom * right_weight * width0;
+        m_output_dimensions.top = y - m_zoom * top_weight * height0;
+        m_output_dimensions.bottom = y + m_zoom * bottom_weight * height0;
+    }
 }
 
 void GraphVizPreview::reset_zoom()
 {
     m_zoom = -1.0;
+}
+
+void GraphVizPreview::drag(int x, int y)
+{
+    m_output_dimensions.left -= x;
+    m_output_dimensions.top -= y;
+    m_output_dimensions.right -= x;
+    m_output_dimensions.bottom -= y;
 }
 
 void GraphVizPreview::graph(bool saveAs)
@@ -495,11 +572,15 @@ void GraphVizPreview::draw()
     output_dimensions.right -= 1;
     output_dimensions.bottom -= 1;
 
-    double width_ratio = double(output_dimensions.right) / bitmap.bmWidth;
-    double height_ratio = double(output_dimensions.bottom) / bitmap.bmHeight;
-
+    m_original_output_dimensions.top = 0;
+    m_original_output_dimensions.left = 0;
+    m_original_output_dimensions.right = bitmap.bmWidth;
+    m_original_output_dimensions.bottom = bitmap.bmHeight;
     if (m_zoom <= 0.0)
     {
+        double width_ratio = double(output_dimensions.right) / bitmap.bmWidth;
+        double height_ratio = double(output_dimensions.bottom) / bitmap.bmHeight;
+
         if (width_ratio < 1.0 || height_ratio < 1.0)
         {
             if (width_ratio < height_ratio)
@@ -524,9 +605,12 @@ void GraphVizPreview::draw()
     }
     else
     {
-        output_dimensions.right = bitmap.bmWidth * m_zoom;
-        output_dimensions.bottom = bitmap.bmHeight * m_zoom;
+        m_output_dimensions.right = m_output_dimensions.left + m_zoom * bitmap.bmWidth;
+        m_output_dimensions.bottom = m_output_dimensions.top + m_zoom * bitmap.bmHeight;
+        output_dimensions = m_output_dimensions;
     }
+
+    m_output_dimensions = output_dimensions;
 
     // Begin painting    
 	PAINTSTRUCT 	ps;
@@ -541,10 +625,10 @@ void GraphVizPreview::draw()
 
     // Copy from bitmap to dialog rectangle, with scaling.
     StretchBlt(hdc, 
-        0, 0, output_dimensions.right, output_dimensions.bottom,
+        output_dimensions.left, output_dimensions.top,
+        bitmap.bmWidth * m_zoom, bitmap.bmHeight * m_zoom,
         hdcMem,
         0, 0, bitmap.bmWidth, bitmap.bmHeight, SRCCOPY);
-
 
 	SelectObject(hdcMem, oldBitmap);
 

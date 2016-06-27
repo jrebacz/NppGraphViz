@@ -26,9 +26,9 @@ public:
 	GraphVizPreview(HINSTANCE, HWND);
 	~GraphVizPreview();
 
-    void zoom_in();
-    void zoom_out();
+    void zoom(int x, int y, double zoom_amount);
     void reset_zoom();
+    void drag(int x, int y);
 
     void graph(bool saveAs);
 	void draw();
@@ -45,6 +45,8 @@ public:
 	std::vector<char> m_bmp_data;
 	
     double m_zoom;
+    RECT m_original_output_dimensions;
+    RECT m_output_dimensions;
 
 	HWND m_hDlg;
 	HINSTANCE m_hInst;
