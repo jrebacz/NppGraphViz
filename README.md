@@ -12,7 +12,7 @@ A Notepad++ plugin that sends the current tab's document to a GraphViz preview w
 
 3. Install NppGraphViz
 
-    Download the NppGraphViz.dll from github at [v1.0.1 NppGraphViz.dll](https://github.com/jrebacz/NppGraphViz/releases/download/v1.0.1/NppGraphViz.dll).  Move NppGraphViz.dll into the plugins\ directory of Notepad++.  On a typical install, the full path would be "C:\Program Files (x86)\Notepad++\plugins\".
+    Download the NppGraphViz.dll from github at [v1.0.2 NppGraphViz.dll](https://github.com/jrebacz/NppGraphViz/releases/download/v1.0.2/NppGraphViz.dll).  Move NppGraphViz.dll into the plugins\ directory of Notepad++.  On a typical install, the full path would be "C:\Program Files (x86)\Notepad++\plugins\".
 
 4. Start Notepad++
 
@@ -21,6 +21,7 @@ A Notepad++ plugin that sends the current tab's document to a GraphViz preview w
 # Features
 * Hit the F9 key to preview or refresh your current tab's document with a selected GraphViz program (e.g. dot.exe).
 * Save the image with any of GraphViz's supported file types.
+* Zooming and dragging.  The mouse wheel adjusts the zoom.  Holding down the left or right mouse button allows dragging the preview image.  The middle mouse button resets the preview.
 
 # Example
 Suppose you have this text in Notepad++:
