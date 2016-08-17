@@ -35,3 +35,6 @@ Digraph g
 The plugin sends the text to GraphViz, and displays the following preview:
 
 ![graphvizstopcollaboratelisten](https://cloud.githubusercontent.com/assets/12651687/7903042/9c015e94-0795-11e5-9ac9-975c70113a4e.png)
+
+# Syntax highlighting
+NppGraphViz does not add syntax highlighting, but that functionality is available here: [https://github.com/signmotion/graphviz-syntax-highlighting](https://github.com/signmotion/graphviz-syntax-highlighting)
