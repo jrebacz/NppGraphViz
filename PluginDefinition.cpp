@@ -112,7 +112,7 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
 		return doc_text;
 	HWND curScintilla = (which == 0) ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
 
-	int doc_length = ::SendMessage(curScintilla, SCI_GETLENGTH, 0, 0);
+	int doc_length = static_cast<int>(::SendMessage(curScintilla, SCI_GETLENGTH, 0, 0));
 	if (doc_length < 2)
 		return doc_text;
 	doc_text.resize(doc_length + 1);

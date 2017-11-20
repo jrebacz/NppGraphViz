@@ -18,13 +18,13 @@
     <ClCompile Include="PluginDefinition.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NppPluginEntry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="GraphVizPreview.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ConfigFile.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NppPluginEntry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,25 +41,13 @@
     <ClInclude Include="PluginInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DockingFeature\resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Scintilla.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
+    <ClInclude Include="GetGraphvizPath.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GraphVizPreview.h">
-      <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="globals.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GetGraphvizPath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConfigFile.h">

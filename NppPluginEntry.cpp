@@ -25,6 +25,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
                        DWORD  reasonForCall, 
                        LPVOID lpReserved )
 {
+    UNREFERENCED_PARAMETER(reasonForCall);
+    UNREFERENCED_PARAMETER(lpReserved);
     switch (reasonForCall)
     {
       case DLL_PROCESS_ATTACH:
@@ -92,6 +94,10 @@ extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam
 		::MessageBox(NULL, "move", "", MB_OK);
 	}
 */
+    UNREFERENCED_PARAMETER(Message);
+    UNREFERENCED_PARAMETER(wParam);
+    UNREFERENCED_PARAMETER(lParam);
+
 	return TRUE;
 }
 

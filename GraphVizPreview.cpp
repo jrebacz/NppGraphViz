@@ -25,7 +25,7 @@
 
 #include "GetGraphvizPath.h"
 
-void Init(HWND hwnd)
+void Init(HWND)
 {
 }
 
@@ -313,15 +313,13 @@ void GraphVizPreview::zoom(int x, int y, double zoom_amount)
         double right_weight = 1.0 - left_weight;
         double bottom_weight = 1.0 - top_weight;
 
-        double zoom = 0.1;
-        
         double width0 = (m_original_output_dimensions.right - m_original_output_dimensions.left);
         double height0 = (m_original_output_dimensions.bottom - m_original_output_dimensions.top);
 
-        m_output_dimensions.left = x - m_zoom * left_weight * width0;
-        m_output_dimensions.right = x + m_zoom * right_weight * width0;
-        m_output_dimensions.top = y - m_zoom * top_weight * height0;
-        m_output_dimensions.bottom = y + m_zoom * bottom_weight * height0;
+        m_output_dimensions.left = static_cast<LONG>(x - m_zoom * left_weight * width0);
+        m_output_dimensions.right = static_cast<LONG>(x + m_zoom * right_weight * width0);
+        m_output_dimensions.top = static_cast<LONG>(y - m_zoom * top_weight * height0);
+        m_output_dimensions.bottom = static_cast<LONG>(y + m_zoom * bottom_weight * height0);
     }
 }
 
@@ -423,7 +421,7 @@ void GraphVizPreview::graph(bool saveAs)
 
 
     DWORD bytes;
-    if (!WriteFile(g_hChildStd_IN_Wr, &*m_npp_text.begin(), m_npp_text.size(), &bytes, NULL))
+    if (!WriteFile(g_hChildStd_IN_Wr, &*m_npp_text.begin(), static_cast<DWORD>(m_npp_text.size()), &bytes, NULL))
     {
         throw std::exception("Error writing to child process.");
     }
@@ -493,7 +491,7 @@ void GraphVizPreview::graph(bool saveAs)
     if (!saveAs)
     {
         m_bmp_data = outBmp;
-        m_b_err = exit_code;
+        m_b_err = exit_code != 0;
     }
     else
     {
@@ -585,14 +583,14 @@ void GraphVizPreview::draw()
         {
             if (width_ratio < height_ratio)
             {
-                output_dimensions.right = bitmap.bmWidth * width_ratio;
-                output_dimensions.bottom = bitmap.bmHeight * width_ratio;
+                output_dimensions.right = static_cast<LONG>(bitmap.bmWidth * width_ratio);
+                output_dimensions.bottom = static_cast<LONG>(bitmap.bmHeight * width_ratio);
                 m_zoom = width_ratio;
             }
             else
             {
-                output_dimensions.right = bitmap.bmWidth * height_ratio;
-                output_dimensions.bottom = bitmap.bmHeight * height_ratio;
+                output_dimensions.right = static_cast<LONG>(bitmap.bmWidth * height_ratio);
+                output_dimensions.bottom = static_cast<LONG>(bitmap.bmHeight * height_ratio);
                 m_zoom = height_ratio;
             }
         }
@@ -605,8 +603,8 @@ void GraphVizPreview::draw()
     }
     else
     {
-        m_output_dimensions.right = m_output_dimensions.left + m_zoom * bitmap.bmWidth;
-        m_output_dimensions.bottom = m_output_dimensions.top + m_zoom * bitmap.bmHeight;
+        m_output_dimensions.right = static_cast<LONG>(m_output_dimensions.left + m_zoom * bitmap.bmWidth);
+        m_output_dimensions.bottom = static_cast<LONG>(m_output_dimensions.top + m_zoom * bitmap.bmHeight);
         output_dimensions = m_output_dimensions;
     }
 
@@ -626,7 +624,8 @@ void GraphVizPreview::draw()
     // Copy from bitmap to dialog rectangle, with scaling.
     StretchBlt(hdc, 
         output_dimensions.left, output_dimensions.top,
-        bitmap.bmWidth * m_zoom, bitmap.bmHeight * m_zoom,
+        static_cast<LONG>(bitmap.bmWidth * m_zoom),
+        static_cast<LONG>(bitmap.bmHeight * m_zoom),
         hdcMem,
         0, 0, bitmap.bmWidth, bitmap.bmHeight, SRCCOPY);
 
@@ -726,7 +725,6 @@ bool GraphVizPreview::saveAs()
     //ofn.Flags |= OFN_ENABLEHOOK;
     //ofn.lpfnHook = OFNHookProc;
 
-    TCHAR *fn = NULL;
     try {
         if (::GetSaveFileName((OPENFILENAME*)&ofn) == false)
             return false;
@@ -744,7 +742,7 @@ bool GraphVizPreview::saveAs()
 
         // Use the filter index to find the filter string.
         int file_type_inx = 0;
-        for (int i = 1; i < ofn.nFilterIndex * 2; ++i)
+        for (DWORD i = 1; i < ofn.nFilterIndex * 2; ++i)
         {
             if (ofn.lpstrFilter[file_type_inx] == '\0')
                 return false;
