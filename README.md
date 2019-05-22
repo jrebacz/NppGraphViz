@@ -16,7 +16,7 @@ A Notepad++ plugin that sends the current tab's document to a GraphViz preview w
     
     If you installed 32-bit Notepad++, then download the [32-bit NppGraphViz.dll](https://github.com/jrebacz/NppGraphViz/releases/download/v1.0.2/NppGraphViz.dll)
     
-    Move NppGraphViz.dll into the plugins\ directory of Notepad++.  On a typical install, the full path would be "C:\\Program Files\\Notepad++\\plugins\\" or "C:\\Program Files (x86)\\Notepad++\\plugins\\".
+    Make a "NppGraphViz" folder in Notepad++'s plugins directory, and move the NppGraphViz.dll into it.  On a typical install, the full path would be `"C:\Program Files\Notepad++\plugins\NppGraphViz\NppGraphViz.dll"` or `"C:\Program Files (x86)\Notepad++\plugins\NppGraphViz\NppGraphViz.dll"`
 
 4. Start Notepad++
 
