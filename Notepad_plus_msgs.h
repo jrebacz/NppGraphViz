@@ -1,10 +1,10 @@
 // This file is part of Notepad++ project
 // Copyright (C)2003 Don HO <don.h@free.fr>
 //
-//This program is free software; you can redistribute it and/or
-//modify it under the terms of the GNU General Public License
-//as published by the Free Software Foundation; either
-//version 2 of the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either
+// version 2 of the License, or (at your option) any later version.
 //
 // Note that the GPL places important restrictions on "derived works", yet
 // it does not provide a detailed definition of that term.  To avoid
@@ -16,14 +16,14 @@
 //    installer, such as those produced by InstallShield.
 // 3. Links to a library or executes a program that does any of the above.
 //
-//This program is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty of
-//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//GNU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-//You should have received a copy of the GNU General Public License
-//along with this program; if not, write to the Free Software
-//Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 
 #ifndef NOTEPAD_PLUS_MSGS_H
@@ -34,7 +34,7 @@
 
 enum LangType {L_TEXT, L_PHP , L_C, L_CPP, L_CS, L_OBJC, L_JAVA, L_RC,\
 			   L_HTML, L_XML, L_MAKEFILE, L_PASCAL, L_BATCH, L_INI, L_ASCII, L_USER,\
-			   L_ASP, L_SQL, L_VB, L_JS, L_CSS, L_PERL, L_PYTHON, L_LUA,\
+			   L_ASP, L_SQL, L_VB, L_JS, L_CSS, L_PERL, L_PYTHON, L_LUA, \
 			   L_TEX, L_FORTRAN, L_BASH, L_FLASH, L_NSIS, L_TCL, L_LISP, L_SCHEME,\
 			   L_ASM, L_DIFF, L_PROPS, L_PS, L_RUBY, L_SMALLTALK, L_VHDL, L_KIX, L_AU3,\
 			   L_CAML, L_ADA, L_VERILOG, L_MATLAB, L_HASKELL, L_INNO, L_SEARCHRESULT,\
@@ -80,7 +80,7 @@ enum winVer{ WV_UNKNOWN, WV_WIN32S, WV_95, WV_98, WV_ME, WV_NT, WV_W2K, WV_XP, W
 
 	#define NPPM_GETOPENFILENAMESPRIMARY (NPPMSG + 17)
 	#define NPPM_GETOPENFILENAMESSECOND (NPPMSG + 18)
-	
+
 	#define NPPM_CREATESCINTILLAHANDLE (NPPMSG + 20)
 	#define NPPM_DESTROYSCINTILLAHANDLE (NPPMSG + 21)
 	#define NPPM_GETNBUSERLANG (NPPMSG + 22)
@@ -107,7 +107,7 @@ enum winVer{ WV_UNKNOWN, WV_WIN32S, WV_95, WV_98, WV_ME, WV_NT, WV_W2K, WV_XP, W
 	//ascii file to unicode
 	//int NPPM_ENCODESCI(MAIN_VIEW/SUB_VIEW, 0)
 	//return new unicodeMode
-	
+
 	#define NPPM_DECODESCI (NPPMSG + 27)
 	//unicode file to ascii
 	//int NPPM_DECODESCI(MAIN_VIEW/SUB_VIEW, 0)
@@ -166,7 +166,7 @@ enum winVer{ WV_UNKNOWN, WV_WIN32S, WV_95, WV_98, WV_ME, WV_NT, WV_W2K, WV_XP, W
 	//HWND WM_DMM_GETPLUGINHWNDBYNAME(const TCHAR *windowName, const TCHAR *moduleName)
 	// if moduleName is NULL, then return value is NULL
 	// if windowName is NULL, then the first found window handle which matches with the moduleName will be returned
-	
+
 	#define NPPM_MAKECURRENTBUFFERDIRTY (NPPMSG + 44)
 	//BOOL NPPM_MAKECURRENTBUFFERDIRTY(0, 0)
 
@@ -191,13 +191,13 @@ enum winVer{ WV_UNKNOWN, WV_WIN32S, WV_95, WV_98, WV_ME, WV_NT, WV_W2K, WV_XP, W
 	// uncomment //#include "menuCmdID.h"
 	// in the beginning of this file then use the command symbols defined in "menuCmdID.h" file
 	// to access all the Notepad++ menu command items
-	
+
 	#define NPPM_TRIGGERTABBARCONTEXTMENU (NPPMSG + 49)
 	//void NPPM_TRIGGERTABBARCONTEXTMENU(int view, int index2Activate)
 
 	#define NPPM_GETNPPVERSION (NPPMSG + 50)
 	// int NPPM_GETNPPVERSION(0, 0)
-	// return version 
+	// return version
 	// ex : v4.6
 	// HIWORD(version) == 4
 	// LOWORD(version) == 6
@@ -217,75 +217,75 @@ enum winVer{ WV_UNKNOWN, WV_WIN32S, WV_95, WV_98, WV_ME, WV_NT, WV_W2K, WV_XP, W
 	// Return VIEW|INDEX from a buffer ID. -1 if the bufferID non existing
 	// if priorityView set to SUB_VIEW, then SUB_VIEW will be search firstly
 	//
-	// VIEW takes 2 highest bits and INDEX (0 based) takes the rest (30 bits) 
+	// VIEW takes 2 highest bits and INDEX (0 based) takes the rest (30 bits)
 	// Here's the values for the view :
 	//  MAIN_VIEW 0
 	//  SUB_VIEW  1
 
 	#define NPPM_GETFULLPATHFROMBUFFERID (NPPMSG + 58)
 	// INT NPPM_GETFULLPATHFROMBUFFERID(INT bufferID, TCHAR *fullFilePath)
-	// Get full path file name from a bufferID. 
+	// Get full path file name from a bufferID.
 	// Return -1 if the bufferID non existing, otherwise the number of TCHAR copied/to copy
 	// User should call it with fullFilePath be NULL to get the number of TCHAR (not including the nul character),
 	// allocate fullFilePath with the return values + 1, then call it again to get  full path file name
 
 	#define NPPM_GETBUFFERIDFROMPOS (NPPMSG + 59)
 	// LRESULT NPPM_GETBUFFERIDFROMPOS(INT index, INT iView)
-	//wParam: Position of document
-	//lParam: View to use, 0 = Main, 1 = Secondary
-	//Returns 0 if invalid
+	// wParam: Position of document
+	// lParam: View to use, 0 = Main, 1 = Secondary
+	// Returns 0 if invalid
 
 	#define NPPM_GETCURRENTBUFFERID (NPPMSG + 60)
 	// LRESULT NPPM_GETCURRENTBUFFERID(0, 0)
-	//Returns active Buffer
+	// Returns active Buffer
 
 	#define NPPM_RELOADBUFFERID (NPPMSG + 61)
 	// VOID NPPM_RELOADBUFFERID(0, 0)
-	//Reloads Buffer
-	//wParam: Buffer to reload
-	//lParam: 0 if no alert, else alert
+	// Reloads Buffer
+	// wParam: Buffer to reload
+	// lParam: 0 if no alert, else alert
 
 
 	#define NPPM_GETBUFFERLANGTYPE (NPPMSG + 64)
 	// INT NPPM_GETBUFFERLANGTYPE(INT bufferID, 0)
-	//wParam: BufferID to get LangType from
-	//lParam: 0
-	//Returns as int, see LangType. -1 on error
+	// wParam: BufferID to get LangType from
+	// lParam: 0
+	// Returns as int, see LangType. -1 on error
 
 	#define NPPM_SETBUFFERLANGTYPE (NPPMSG + 65)
 	// BOOL NPPM_SETBUFFERLANGTYPE(INT bufferID, INT langType)
-	//wParam: BufferID to set LangType of
-	//lParam: LangType
-	//Returns TRUE on success, FALSE otherwise
-	//use int, see LangType for possible values
-	//L_USER and L_EXTERNAL are not supported
+	// wParam: BufferID to set LangType of
+	// lParam: LangType
+	// Returns TRUE on success, FALSE otherwise
+	// use int, see LangType for possible values
+	// L_USER and L_EXTERNAL are not supported
 
 	#define NPPM_GETBUFFERENCODING (NPPMSG + 66)
 	// INT NPPM_GETBUFFERENCODING(INT bufferID, 0)
-	//wParam: BufferID to get encoding from
-	//lParam: 0
-	//returns as int, see UniMode. -1 on error
+	// wParam: BufferID to get encoding from
+	// lParam: 0
+	// returns as int, see UniMode. -1 on error
 
 	#define NPPM_SETBUFFERENCODING (NPPMSG + 67)
 	// BOOL NPPM_SETBUFFERENCODING(INT bufferID, INT encoding)
-	//wParam: BufferID to set encoding of
+	// wParam: BufferID to set encoding of
 	// lParam: encoding
-	//Returns TRUE on success, FALSE otherwise
-	//use int, see UniMode
-	//Can only be done on new, unedited files
+	// Returns TRUE on success, FALSE otherwise
+	// use int, see UniMode
+	// Can only be done on new, unedited files
 
 	#define NPPM_GETBUFFERFORMAT (NPPMSG + 68)
 	// INT NPPM_GETBUFFERFORMAT(INT bufferID, 0)
-	//wParam: BufferID to get format from
-	//lParam: 0
-	//returns as int, see formatType. -1 on error
+	// wParam: BufferID to get format from
+	// lParam: 0
+	// returns as int, see formatType. -1 on error
 
 	#define NPPM_SETBUFFERFORMAT (NPPMSG + 69)
 	// BOOL NPPM_SETBUFFERFORMAT(INT bufferID, INT format)
-	//wParam: BufferID to set format of
-	//lParam: format
-	//Returns TRUE on success, FALSE otherwise
-	//use int, see formatType
+	// wParam: BufferID to set format of
+	// lParam: format
+	// Returns TRUE on success, FALSE otherwise
+	// use int, see formatType
 
 /*
 	#define NPPM_ADDREBAR (NPPMSG + 57)
@@ -483,12 +483,12 @@ enum winVer{ WV_UNKNOWN, WV_WIN32S, WV_95, WV_98, WV_ME, WV_NT, WV_W2K, WV_XP, W
 	//scnNotification->nmhdr.code = NPPN_FILEBEFOREOPEN;
 	//scnNotification->nmhdr.hwndFrom = hwndNpp;
 	//scnNotification->nmhdr.idFrom = BufferID;
-	
+
 	#define NPPN_FILEBEFORESAVE (NPPN_FIRST + 7) // To notify plugins that the current file is about to be saved
 	//scnNotification->nmhdr.code = NPPN_FILEBEFOREOPEN;
 	//scnNotification->nmhdr.hwndFrom = hwndNpp;
 	//scnNotification->nmhdr.idFrom = BufferID;
-	
+
 	#define NPPN_FILESAVED (NPPN_FIRST + 8) // To notify plugins that the current file is just saved
 	//scnNotification->nmhdr.code = NPPN_FILESAVED;
 	//scnNotification->nmhdr.hwndFrom = hwndNpp;
