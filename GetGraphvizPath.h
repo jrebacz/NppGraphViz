@@ -190,13 +190,38 @@ public:
                     TCHAR szDir[MAX_PATH];
                     if (::SHGetPathFromIDList(pidl, szDir))
                     {
-                        graphviz_path = szDir;
-                        appendTrailingSlash(graphviz_path);
-                        settings.graphviz_path = graphviz_path;
+						std::wstring strDir = szDir;
+						// find dot.exe on path provided						
+						appendTrailingSlash(strDir);
+						strDir.append(TEXT("dot.exe"));
+						if (PathFileExists(strDir.c_str()))
+						{
+							graphviz_path = szDir;
+							appendTrailingSlash(graphviz_path);
+							settings.graphviz_path = graphviz_path;
 
-                        cfg.save(settings);
+							cfg.save(settings);
 
-                        success = true;
+							success = true;
+						}
+						else
+						{
+							// try finding dot.exe in bin
+							strDir = szDir;
+							appendTrailingSlash(strDir);
+							strDir.append(TEXT("bin\\dot.exe"));
+							if (PathFileExists(strDir.c_str()))
+							{
+								graphviz_path = szDir;
+								appendTrailingSlash(graphviz_path);
+								graphviz_path.append(TEXT("bin\\"));
+								settings.graphviz_path = graphviz_path;
+
+								cfg.save(settings);
+
+								success = true;
+							}
+						}
                     }
                     pShellMalloc->Free(pidl);
                 }
