@@ -19,6 +19,7 @@
 #include <Windows.h>
 
 #include <vector>
+#include <xstring>
 
 class GraphVizPreview
 {
