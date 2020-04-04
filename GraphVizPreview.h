@@ -24,33 +24,34 @@
 class GraphVizPreview
 {
 public:
-	GraphVizPreview(HINSTANCE, HWND);
-	~GraphVizPreview();
+    GraphVizPreview(HINSTANCE, HWND);
+    ~GraphVizPreview();
 
     void zoom(int x, int y, double zoom_amount);
     void reset_zoom();
     void drag(int x, int y);
 
     void graph(bool saveAs);
-	void draw();
-	void refresh();
+    std::vector<char> readFromPipe(HANDLE pipe, PROCESS_INFORMATION& process_info, const char* label);
+    void draw();
+    void refresh();
     bool saveAs();
 
     std::wstring m_graphviz_path;
     std::wstring m_save_as_path;
     std::wstring m_save_as_ext;
 
-	std::wstring m_layout_engine; // e.g. "dot.exe"
-	bool m_b_err;
+    std::wstring m_layout_engine; // e.g. "dot.exe"
+    bool m_b_err;
     std::vector<char> m_npp_text;
-	std::vector<char> m_bmp_data;
-	
+    std::vector<char> m_bmp_data;
+    
     double m_zoom;
     RECT m_original_output_dimensions;
     RECT m_output_dimensions;
 
-	HWND m_hDlg;
-	HINSTANCE m_hInst;
+    HWND m_hDlg;
+    HINSTANCE m_hInst;
 };
 
 GraphVizPreview * getGraphVizPreview();

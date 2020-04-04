@@ -154,83 +154,80 @@ public:
         {
             return false;
         }
-        else
+        
+        bool success = false;
+        LPMALLOC pShellMalloc = 0;
+        if (::SHGetMalloc(&pShellMalloc) == NO_ERROR)
         {
-            bool success = false;
-            LPMALLOC pShellMalloc = 0;
-            if (::SHGetMalloc(&pShellMalloc) == NO_ERROR)
+            // If we were able to get the shell malloc object,
+            // then proceed by initializing the BROWSEINFO stuct
+            BROWSEINFO info;
+            memset(&info, 0, sizeof(info));
+            info.hwndOwner = m_parent;
+            info.pidlRoot = NULL;
+            TCHAR szDisplayName[MAX_PATH];
+            info.pszDisplayName = szDisplayName;
+            info.lpszTitle = TEXT("Select Graphviz's installation directory.");
+            info.ulFlags = 0;
+            info.lpfn = 0;
+            TCHAR directory[MAX_PATH];
+
+            if (!directory[0] && m_defaultDirectory)
+                info.lParam = reinterpret_cast<LPARAM>(m_defaultDirectory);
+            else
+                info.lParam = reinterpret_cast<LPARAM>(directory);
+
+            // Execute the browsing dialog.
+            LPITEMIDLIST pidl = ::SHBrowseForFolder(&info);
+
+            // pidl will be null if they cancel the browse dialog.
+            // pidl will be not null when they select a folder.
+            if (pidl)
             {
-                // If we were able to get the shell malloc object,
-                // then proceed by initializing the BROWSEINFO stuct
-                BROWSEINFO info;
-                memset(&info, 0, sizeof(info));
-                info.hwndOwner = m_parent;
-                info.pidlRoot = NULL;
-                TCHAR szDisplayName[MAX_PATH];
-                info.pszDisplayName = szDisplayName;
-                info.lpszTitle = TEXT("Select Graphviz's installation directory.");
-                info.ulFlags = 0;
-                info.lpfn = 0;
-                TCHAR directory[MAX_PATH];
-
-                if (!directory[0] && m_defaultDirectory)
-                    info.lParam = reinterpret_cast<LPARAM>(m_defaultDirectory);
-                else
-                    info.lParam = reinterpret_cast<LPARAM>(directory);
-
-                // Execute the browsing dialog.
-                LPITEMIDLIST pidl = ::SHBrowseForFolder(&info);
-
-                // pidl will be null if they cancel the browse dialog.
-                // pidl will be not null when they select a folder.
-                if (pidl)
+                // Try to convert the pidl to a display generic_string.
+                // Return is true if success.
+                TCHAR szDir[MAX_PATH];
+                if (::SHGetPathFromIDList(pidl, szDir))
                 {
-                    // Try to convert the pidl to a display generic_string.
-                    // Return is true if success.
-                    TCHAR szDir[MAX_PATH];
-                    if (::SHGetPathFromIDList(pidl, szDir))
+                    std::wstring strDir = szDir;
+                    // find dot.exe on path provided						
+                    appendTrailingSlash(strDir);
+                    strDir.append(TEXT("dot.exe"));
+                    if (PathFileExists(strDir.c_str()))
                     {
-						std::wstring strDir = szDir;
-						// find dot.exe on path provided						
-						appendTrailingSlash(strDir);
-						strDir.append(TEXT("dot.exe"));
-						if (PathFileExists(strDir.c_str()))
-						{
-							graphviz_path = szDir;
-							appendTrailingSlash(graphviz_path);
-							settings.graphviz_path = graphviz_path;
+                        graphviz_path = szDir;
+                        appendTrailingSlash(graphviz_path);
+                        settings.graphviz_path = graphviz_path;
 
-							cfg.save(settings);
+                        cfg.save(settings);
 
-							success = true;
-						}
-						else
-						{
-							// try finding dot.exe in bin
-							strDir = szDir;
-							appendTrailingSlash(strDir);
-							strDir.append(TEXT("bin\\dot.exe"));
-							if (PathFileExists(strDir.c_str()))
-							{
-								graphviz_path = szDir;
-								appendTrailingSlash(graphviz_path);
-								graphviz_path.append(TEXT("bin\\"));
-								settings.graphviz_path = graphviz_path;
-
-								cfg.save(settings);
-
-								success = true;
-							}
-						}
+                        success = true;
                     }
-                    pShellMalloc->Free(pidl);
-                }
-                pShellMalloc->Release();
-            }
-            return success;
-        }
+                    else
+                    {
+                        // try finding dot.exe in bin
+                        strDir = szDir;
+                        appendTrailingSlash(strDir);
+                        strDir.append(TEXT("bin\\dot.exe"));
+                        if (PathFileExists(strDir.c_str()))
+                        {
+                            graphviz_path = szDir;
+                            appendTrailingSlash(graphviz_path);
+                            graphviz_path.append(TEXT("bin\\"));
+                            settings.graphviz_path = graphviz_path;
 
-        return true;
+                            cfg.save(settings);
+
+                            success = true;
+                        }
+                    }
+                }
+                pShellMalloc->Free(pidl);
+            }
+            pShellMalloc->Release();
+        }
+        return success;
+        
     }
 private:
     HWND m_parent;

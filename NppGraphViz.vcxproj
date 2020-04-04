@@ -29,6 +29,7 @@
     <ClInclude Include="DockingFeature\Window.h" />-->
     <ClInclude Include="GetGraphvizPath.h" />
     <ClInclude Include="globals.h" />
+    <ClInclude Include="GraphVizPreview.h" />
     <ClInclude Include="menuCmdID.h" />
     <ClInclude Include="Notepad_plus_msgs.h" />
     <ClInclude Include="PluginDefinition.h" />

@@ -20,8 +20,12 @@
 #include "resource.h" // To get dialog enumerations.
 
 #include <algorithm>
+#include <thread>
+#include <future>
 
 #include "globals.h"
+
+#include <sstream>
 
 #include "GetGraphvizPath.h"
 
@@ -39,14 +43,14 @@ static UINT lastLayoutEngineCode = ID_LAYOUTENGINE_DOT;
 static std::wstring lastLayoutEngine = TEXT("dot.exe");
 static void SelectLayoutEngine(UINT check_item)
 {
-	HMENU mainMenu = ::GetMenu(getGraphVizPreview()->m_hDlg);
-	// Deselect everything.
-	for (UINT i = ID_LAYOUTENGINE_DOT; i <= ID_LAYOUTENGINE_CIRCO; ++i)
-	{ 
-		CheckMenuItem(mainMenu, i, MF_BYCOMMAND | MF_UNCHECKED);
-	}
-	// Select chosen.
-	CheckMenuItem(mainMenu, check_item, MF_BYCOMMAND | MF_CHECKED);
+    HMENU mainMenu = ::GetMenu(getGraphVizPreview()->m_hDlg);
+    // Deselect everything.
+    for (UINT i = ID_LAYOUTENGINE_DOT; i <= ID_LAYOUTENGINE_CIRCO; ++i)
+    { 
+        CheckMenuItem(mainMenu, i, MF_BYCOMMAND | MF_UNCHECKED);
+    }
+    // Select chosen.
+    CheckMenuItem(mainMenu, check_item, MF_BYCOMMAND | MF_CHECKED);
     lastLayoutEngineCode = check_item;
 }
 
@@ -80,7 +84,7 @@ INT_PTR CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     static bool is_dragging = false;
 
     switch (uMsg)
-	{
+    {
 
     case WM_INITDIALOG:
     {
@@ -102,12 +106,12 @@ INT_PTR CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         SelectLayoutEngine(lastLayoutEngineCode, hwnd);
-		break;
+        break;
     }
     case WM_PAINT:
     {
-		getGraphVizPreview()->draw();
-		break;
+        getGraphVizPreview()->draw();
+        break;
     }
     case WM_SIZE:
         RedrawWindow(getGraphVizPreview()->m_hDlg, NULL, NULL, RDW_INVALIDATE);
@@ -172,7 +176,7 @@ INT_PTR CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
     case WM_ERASEBKGND:
         return TRUE;    // to reduce flickering when dragging the preview
-	case WM_COMMAND:
+    case WM_COMMAND:
         switch (LOWORD(wParam))
         {
         case ID_FILE_SAVE:
@@ -245,9 +249,9 @@ INT_PTR CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
     }
     break;
-	case WM_CLOSE:
-		DestroyWindow(hwnd);
-		return TRUE;
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
+        return TRUE;
 
     case WM_DESTROY:
         {
@@ -255,29 +259,29 @@ INT_PTR CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             if (!lastLayoutEngine.empty())
                 settings.graphviz_layout = lastLayoutEngine;
             cfg.save(settings);
-		    //PostQuitMessage(0);
-		    killGraphVizPreview();
-		    return TRUE;
+            //PostQuitMessage(0);
+            killGraphVizPreview();
+            return TRUE;
         }
 
-	}
+    }
 
-	return FALSE;
+    return FALSE;
 }
 
-GraphVizPreview::GraphVizPreview(HINSTANCE hInst, HWND hWnd)
+GraphVizPreview::GraphVizPreview(HINSTANCE hInstance, HWND hWnd)
     : m_b_err(false), m_layout_engine(lastLayoutEngine), m_graphviz_path(TEXT("")), m_zoom(-1.0)
 {
-	m_hInst = hInst;
+    m_hInst = hInstance;
 
-	m_hDlg = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DIALOG1), hWnd, WndProc);
-	if (m_hDlg == NULL) 
-	{
-		MessageBox(hWnd, L"Could not create dialog", 0, 0);
-		return;
-	}
+    m_hDlg = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_DIALOG1), hWnd, WndProc);
+    if (m_hDlg == NULL) 
+    {
+        MessageBox(hWnd, L"Could not create dialog", 0, 0);
+        return;
+    }
 
-	ShowWindow(m_hDlg, SW_SHOW);
+    ShowWindow(m_hDlg, SW_SHOW);
 }
 
 
@@ -359,6 +363,12 @@ void GraphVizPreview::graph(bool saveAs)
     if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
         throw std::exception("Stdout SetHandleInformation");
 
+    HANDLE g_hChildStd_ERR_Rd, g_hChildStd_ERR_Wr;
+    if (!CreatePipe(&g_hChildStd_ERR_Rd, &g_hChildStd_ERR_Wr, &saAttr, 0))
+        throw std::exception("Pipe creation failed.");
+    if (!SetHandleInformation(g_hChildStd_ERR_Rd, HANDLE_FLAG_INHERIT, 0))
+        throw std::exception("Stderr SetHandleInformation");
+
     HANDLE g_hChildStd_IN_Rd, g_hChildStd_IN_Wr;
     if (!CreatePipe(&g_hChildStd_IN_Rd, &g_hChildStd_IN_Wr, &saAttr, 0))
         throw std::exception("Pipe creation failed.");
@@ -372,7 +382,7 @@ void GraphVizPreview::graph(bool saveAs)
     ZeroMemory(&info, sizeof(info));
     ZeroMemory(&processInfo, sizeof(processInfo));;
     info.cb = sizeof(STARTUPINFO);
-    info.hStdError = g_hChildStd_OUT_Wr;
+    info.hStdError = g_hChildStd_ERR_Wr;
     info.hStdOutput = g_hChildStd_OUT_Wr;
     info.hStdInput = g_hChildStd_IN_Rd;
     info.wShowWindow = SW_HIDE;
@@ -419,60 +429,54 @@ void GraphVizPreview::graph(bool saveAs)
         }
     }
 
-
-    DWORD bytes;
-    if (!WriteFile(g_hChildStd_IN_Wr, &*m_npp_text.begin(), static_cast<DWORD>(m_npp_text.size()), &bytes, NULL))
-    {
-        throw std::exception("Error writing to child process.");
-    }
-    // write EOF (this may not be necessary)
-    const char byte_eof = EOF;
-    if (!WriteFile(g_hChildStd_IN_Wr, &byte_eof, 1, &bytes, NULL))
-    {
-        throw std::exception("Error writing to child process.");
-    }
-    CloseHandle(g_hChildStd_IN_Wr);
-
-    std::vector<char> outBmp(0);
-
-    DWORD total_available, bytes_left_this_message;
-    for (bool last_read = false;;)
-    {
-        // Check for program output.
-        if (PeekNamedPipe(g_hChildStd_OUT_Rd, NULL, 0, NULL, &total_available, &bytes_left_this_message) == 0)
-        {
-            break;
-        }
-
-        if (total_available == 0)
-        {
-            // Is the process done?
-            if (::WaitForSingleObject(processInfo.hProcess, 0 /*milliseconds*/) != WAIT_TIMEOUT)
+    auto future_in = std::async(std::launch::async, [&]() {
+            DWORD bytes=0;
+            for (DWORD i = 0; i < static_cast<DWORD>(m_npp_text.size()); i += bytes)
             {
-                if (last_read)
-                    break;
-                last_read = true;
-                continue;
+                DWORD to_write = min(1024, m_npp_text.size() - i);
+                if (!WriteFile(g_hChildStd_IN_Wr, &m_npp_text[i], to_write, &bytes, NULL))
+                {
+                    throw std::exception("Error writing to child process.");
+                }
             }
-            // Wait more.
-            Sleep(5);
-            continue;
-        }
 
-        // Read BMP data.
-        const size_t prev_size = outBmp.size();
-        outBmp.resize(prev_size + total_available);
+            // write EOF (this may not be necessary)
+            const char byte_eof = EOF;
+            if (!WriteFile(g_hChildStd_IN_Wr, &byte_eof, 1, &bytes, NULL))
+            {
+                throw std::exception("Error writing to child process.");
+            }
+            CloseHandle(g_hChildStd_IN_Wr);
 
-        if (ReadFile(g_hChildStd_OUT_Rd, &outBmp[prev_size], total_available, &bytes, NULL) == 0)
-        {
-            break;
+            std::wstringstream ss;
+            ss << "wrote " << m_npp_text.size() << " bytes, closing pipe.\n";
+            OutputDebugString(ss.str().c_str());
         }
-    }
+    );
+   
+
+    // we need to read from both stdout and stderr at the same time
+    auto future_out = std::async(std::launch::async, [&]() {
+        return this->readFromPipe(g_hChildStd_OUT_Rd, processInfo, "out");
+            });
+    auto future_err = std::async(std::launch::async, [&]() {
+        return this->readFromPipe(g_hChildStd_ERR_Rd, processInfo, "err");
+        });
+    
+    ::WaitForSingleObject(processInfo.hProcess, INFINITE);
+
+    // In case the GraphViz process dies before all input is written, empty out pipe.
+    auto unfinished_in = std::async(std::launch::async, [&]() {
+        return this->readFromPipe(g_hChildStd_IN_Rd, processInfo, "in");
+        });
+    
+    future_in.get();
+    std::vector<char> outBmp = future_out.get();
+    std::vector<char> outErr = future_err.get();
 
     DWORD exit_code;
     GetExitCodeProcess(processInfo.hProcess, &exit_code);
-
-    ::WaitForSingleObject(processInfo.hProcess, INFINITE);
+    
     CloseHandle(processInfo.hProcess);
     CloseHandle(processInfo.hThread);
 
@@ -490,8 +494,15 @@ void GraphVizPreview::graph(bool saveAs)
 
     if (!saveAs)
     {
-        m_bmp_data = outBmp;
         m_b_err = exit_code != 0;
+        if (m_b_err)
+        {
+            m_bmp_data = outErr;
+        }
+        else
+        {
+            m_bmp_data = outBmp;
+        }
     }
     else
     {
@@ -500,6 +511,54 @@ void GraphVizPreview::graph(bool saveAs)
             ::MessageBoxA(NULL, "Failed to save graph!", "", MB_OK);
         }
     }
+}
+
+std::vector<char> GraphVizPreview::readFromPipe(HANDLE pipe, PROCESS_INFORMATION& process_info, const char * label)
+{
+    std::vector<char> out(0);
+    SetLastError(0);
+    DWORD total_available, bytes_left_this_message;
+    
+    bool last_read = false;
+    while (true)
+    {
+        // Check for program output.
+        if (PeekNamedPipe(pipe, NULL, 0, NULL, &total_available, &bytes_left_this_message) == 0)
+        {
+            break;
+        }
+
+        if (total_available == 0)
+        {
+            // Is the process done?
+            if (::WaitForSingleObject(process_info.hProcess, 0 /*milliseconds*/) != WAIT_TIMEOUT)
+            {
+                if (last_read)
+                    break;
+                last_read = true;
+                continue;
+            }
+            // Wait more.
+            Sleep(5);
+            continue;
+        }
+
+        // Read BMP data.
+        const size_t prev_size = out.size();
+        out.resize(prev_size + total_available);
+
+        DWORD bytes;
+        if (ReadFile(pipe, &out[prev_size], total_available, &bytes, NULL) == 0)
+        {
+            break;
+        }
+
+        std::wstringstream ss;
+        ss << label << " read " << bytes << " bytes\n";
+        OutputDebugString(ss.str().c_str());
+    }
+
+    return out;
 }
 
 void GraphVizPreview::draw()
@@ -611,10 +670,10 @@ void GraphVizPreview::draw()
     m_output_dimensions = output_dimensions;
 
     // Begin painting    
-	PAINTSTRUCT 	ps;
-	HDC 			hdc = BeginPaint(pImage, &ps);
-	HDC hdcMem = CreateCompatibleDC(hdc);
-	HGDIOBJ oldBitmap = SelectObject(hdcMem, hBmp);
+    PAINTSTRUCT 	ps;
+    HDC 			hdc = BeginPaint(pImage, &ps);
+    HDC hdcMem = CreateCompatibleDC(hdc);
+    HGDIOBJ oldBitmap = SelectObject(hdcMem, hBmp);
 
     // Draw dark grey everywhere
     HBRUSH bg_color = CreateSolidBrush(RGB(200,200,200));
@@ -629,19 +688,19 @@ void GraphVizPreview::draw()
         hdcMem,
         0, 0, bitmap.bmWidth, bitmap.bmHeight, SRCCOPY);
 
-	SelectObject(hdcMem, oldBitmap);
+    SelectObject(hdcMem, oldBitmap);
 
-	DeleteDC(hdcMem);
+    DeleteDC(hdcMem);
 
-	EndPaint(pImage, &ps);
+    EndPaint(pImage, &ps);
 
-	DeleteObject(hBmp);
-	
+    DeleteObject(hBmp);
+    
 }
 
 void GraphVizPreview::refresh()
 {
-	launchGraphVizPreview();
+    launchGraphVizPreview();
 }
 
 bool GraphVizPreview::saveAs()
@@ -800,19 +859,19 @@ static GraphVizPreview *graphVizDlg;
 
 GraphVizPreview * getGraphVizPreview()
 {
-	if (graphVizDlg == nullptr)
-	{
-		int handleForGraphViz = 0;
-		::SendMessage(nppData._nppHandle, NPPM_MODELESSDIALOG, MODELESSDIALOGADD, (LPARAM)&handleForGraphViz);
+    if (graphVizDlg == nullptr)
+    {
+        int handleForGraphViz = 0;
+        ::SendMessage(nppData._nppHandle, NPPM_MODELESSDIALOG, MODELESSDIALOGADD, (LPARAM)&handleForGraphViz);
 
-		graphVizDlg = new GraphVizPreview(hInst, nppData._nppHandle);
+        graphVizDlg = new GraphVizPreview(hInst, nppData._nppHandle);
 
-	}	
-	return graphVizDlg;
+    }	
+    return graphVizDlg;
 }
 
 void killGraphVizPreview()
 {
-	delete graphVizDlg;
-	graphVizDlg = nullptr;
+    delete graphVizDlg;
+    graphVizDlg = nullptr;
 }
