@@ -30,7 +30,7 @@ A Notepad++ plugin that sends the current tab's document to a GraphViz preview w
 # Example
 Suppose you have this text in Notepad++:
 ```
-Digraph g
+digraph g
 {
     Stop->Collaborate
     Collaborate->Listen
